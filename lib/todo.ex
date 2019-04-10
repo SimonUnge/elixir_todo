@@ -1,10 +1,10 @@
-defmodule TodoList do
+defmodule Todo do
   defstruct auto_id: 1, entries: %{}
 
   def new(entries \\ []) do
     Enum.reduce(
       entries,
-      %TodoList{},
+      %Todo{},
       &add_entry(&2, &1)
     )
   end
@@ -16,10 +16,9 @@ defmodule TodoList do
       todo_list.auto_id,
       entry
     )
-
-    %TodoList{todo_list |
-              auto_id: todo_list.auto_id + 1,
-              entries: new_entries
+    %Todo{todo_list |
+          auto_id: todo_list.auto_id + 1,
+          entries: new_entries
     }
   end
 
@@ -37,29 +36,21 @@ defmodule TodoList do
         old_id = old_entry.id
         new_entry = %{id: ^old_id} = updater_fun.(old_entry)
         new_entries = Map.put(todo_list.entries, entry_id, new_entry)
-        %TodoList{todo_list | entries: new_entries}
+        %Todo{todo_list | entries: new_entries}
     end
   end
 
   def delete_entry(todo_list, entry_id) do
-    %TodoList{todo_list | entries: Map.delete(todo_list.entries, entry_id)}
-  end
-
-  def tmp do
-    [
-      %{date: ~D[2018-12-19], title: "Dentist"},
-      %{date: ~D[2018-12-20], title: "Shopping"},
-      %{date: ~D[2018-12-19], title: "Movies"}
-    ]
+    %Todo{todo_list | entries: Map.delete(todo_list.entries, entry_id)}
   end
 end
 
-defmodule TodoList.CsvImporter do
+defmodule Todo.CsvImporter do
   def import(file) do
     file
     |> read_lines
     |> create_entries
-    |> TodoList.new
+    |> Todo.new
   end
 
   defp read_lines(file) do
