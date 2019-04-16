@@ -2,19 +2,19 @@ defmodule Todo.Server do
   use GenServer
 
   def start() do
-    GenServer.start(__MODULE__, nil, name: __MODULE__)
+    GenServer.start(__MODULE__, nil)
   end
 
-  def add_entry(entry) do
-     GenServer.call(__MODULE__, {:add_entry, entry})
+  def add_entry(pid, entry) do
+     GenServer.call(pid, {:add_entry, entry})
   end
 
-  def entries(date) do
-     GenServer.call(__MODULE__, {:entries, date})
+  def entries(pid, date) do
+     GenServer.call(pid, {:entries, date})
   end
 
-  def delete_entry(entry_id) do
-     GenServer.call(__MODULE__, {:delete_entry, entry_id})
+  def delete_entry(pid, entry_id) do
+     GenServer.call(pid, {:delete_entry, entry_id})
   end
 
   @impl GenServer
