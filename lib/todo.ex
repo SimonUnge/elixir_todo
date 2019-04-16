@@ -84,47 +84,42 @@ defmodule Todo.CsvImporter do
 end
 
 defmodule TodoServer do
-  def start do
-    Process.register(spawn(fn -> loop(Todo.new()) end), :todo_server)
+  use GenServer
+
+  def start() do
+    GenServer.start(__MODULE__, nil, name: __MODULE__)
   end
 
-  defp loop(todo_list) do
-    new_todo_list =
-    receive do
-      message -> process_message(todo_list, message)
-    end
-    loop(new_todo_list)
+  def add_entry(entry) do
+     GenServer.call(__MODULE__, {:add_entry, entry})
   end
 
-  def add_entry(todo_server \\ :todo_server, new_entry) do
-    send(todo_server, {:add_entry, new_entry})
+  def entries(date) do
+     GenServer.call(__MODULE__, {:entries, date})
   end
 
-  def delete_entry(todo_server \\ :todo_server, entry_id) do
-    send(todo_server, {:delete_entry, entry_id})
+  def delete_entry(entry_id) do
+     GenServer.call(__MODULE__, {:delete_entry, entry_id})
   end
 
-  def entries(todo_server \\ :todo_server, date) do
-    send(todo_server, {:entries, self(), date})
-    receive do
-      {:todo_entries, entries} -> entries
-    after
-      5000 -> {:error, :timeout}
-    end
+  @impl GenServer
+  def init(_) do
+    {:ok, Todo.new()}
   end
 
-  defp process_message(todo_list, {:add_entry, entry}) do
-    Todo.add_entry(todo_list, entry)
+  @impl GenServer
+  def handle_call({:add_entry, entry}, _from, state) do
+    new_state = Todo.add_entry(state, entry)
+    {:reply, :ok, new_state}
   end
 
-  defp process_message(todo_list, {:delete_entry, entry_id}) do
-    Todo.delete_entry(todo_list, entry_id)
+  def handle_call({:entries, date}, _from, state) do
+    entries = Todo.entries(state, date)
+    {:reply, entries, state}
   end
 
-  defp process_message(todo_list, {:entries, caller, date}) do
-    entries = Todo.entries(todo_list, date)
-    send(caller, {:todo_entries, entries})
-    todo_list
+  def handle_call({:delete_entry, id}, _from, state) do
+    {:reply, :ok, Todo.delete_entry(state, id)}
   end
 end
 
