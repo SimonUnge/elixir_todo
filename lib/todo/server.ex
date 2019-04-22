@@ -1,8 +1,8 @@
 defmodule Todo.Server do
   use GenServer
 
-  def start() do
-    GenServer.start(__MODULE__, nil)
+  def start(name) do
+    GenServer.start(__MODULE__, name)
   end
 
   def add_entry(pid, entry) do
@@ -18,22 +18,23 @@ defmodule Todo.Server do
   end
 
   @impl GenServer
-  def init(_) do
-    {:ok, Todo.List.new()}
+  def init(name) do
+    {:ok, {name, Todo.Database.get(name) || Todo.List.new()}}
   end
 
   @impl GenServer
-  def handle_call({:add_entry, entry}, _from, state) do
-    new_state = Todo.List.add_entry(state, entry)
-    {:reply, :ok, new_state}
+  def handle_call({:add_entry, entry}, _from, {name, list}) do
+    new_list = Todo.List.add_entry(list, entry)
+    Todo.Database.store(name, new_list)
+    {:reply, :ok, {name, new_list}}
   end
 
-  def handle_call({:entries, date}, _from, state) do
-    entries = Todo.List.entries(state, date)
+  def handle_call({:entries, date}, _from, {_name, list} = state) do
+    entries = Todo.List.entries(list, date)
     {:reply, entries, state}
   end
 
-  def handle_call({:delete_entry, id}, _from, state) do
-    {:reply, :ok, Todo.List.delete_entry(state, id)}
+  def handle_call({:delete_entry, id}, _from, {name, list}) do
+    {:reply, :ok, {name, Todo.List.delete_entry(list, id)}}
   end
 end
